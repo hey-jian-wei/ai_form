@@ -7,6 +7,7 @@ File Name:ui_components.py
 import streamlit as st
 from typing import Dict, Any, List
 from form_definitions import get_form_types, get_form_structure
+from speech_recognition import speech_to_text_widget
 
 
 def render_form_selector():
@@ -34,11 +35,16 @@ def render_form_selector():
             st.session_state.form_type = "年报"
             st.rerun()
 
+    # 添加GPU选项
+    st.sidebar.title("设置")
+    st.session_state.use_gpu = st.sidebar.checkbox("使用GPU", value=False,
+                                                   help="启用GPU可加速语音识别，但需要CUDA支持")
+
     st.markdown("""
     ### 使用说明
 
     1. 选择要填写的表单类型
-    2. 在聊天框中描述您的工作内容
+    2. 在聊天框中描述您的工作内容或使用语音输入
     3. AI将帮助您自动填写表单
     4. 检查并编辑表单内容
     5. 确认无误后提交表单
@@ -54,12 +60,60 @@ def render_welcome_message(form_type: str) -> str:
     根据表单类型生成欢迎消息
     """
     messages = {
-        "日报": "你好！我是你的表单填写助手。请告诉我今天的工作内容，我会帮你整理成一份完整的日报。\n\n你可以这样描述：'今天我完成了XX项目的开发，解决了几个问题...'",
-        "周报": "你好！我是你的表单填写助手。请告诉我本周的工作内容和成果，我会帮你整理成一份完整的周报。\n\n你可以这样描述：'本周我主要负责了XX项目，完成了哪些任务，遇到了什么问题...'",
-        "年报": "你好！我是你的表单填写助手。请告诉我今年的工作成果、项目完成情况和未来规划，我会帮你整理成一份完整的年报。\n\n你可以分多次告诉我不同部分的内容，我会逐步完善你的年报。"
+        "日报": "你好！我是你的表单填写助手。请告诉我今天的工作内容，我会帮你整理成一份完整的日报。\n\n你可以这样描述：'今天我完成了XX项目的开发，解决了几个问题...'或者使用语音输入功能。",
+        "周报": "你好！我是你的表单填写助手。请告诉我本周的工作内容和成果，我会帮你整理成一份完整的周报。\n\n你可以这样描述：'本周我主要负责了XX项目，完成了哪些任务，遇到了什么问题...'或者使用语音输入功能。",
+        "年报": "你好！我是你的表单填写助手。请告诉我今年的工作成果、项目完成情况和未来规划，我会帮你整理成一份完整的年报。\n\n你可以分多次告诉我不同部分的内容，或者使用语音输入功能，我会逐步完善你的年报。"
     }
 
-    return messages.get(form_type, "你好！我是你的表单填写助手。请告诉我需要填写的内容，我会帮你整理成一份完整的表单。")
+    return messages.get(form_type,
+                        "你好！我是你的表单填写助手。请告诉我需要填写的内容，我会帮你整理成一份完整的表单。你可以文字输入或语音输入。")
+
+
+# 修改 ui_components.py 中的 render_chat_input_area 函数
+
+def render_chat_input_area():
+    """
+    渲染包含语音输入功能的聊天输入区域
+    """
+    # 使用选项卡分隔文字输入和语音输入
+    tab1, tab2 = st.tabs(["文字输入", "语音输入"])
+
+    user_input = None
+
+    with tab1:
+        # 普通文字输入
+        text_input = st.chat_input("请描述您要填写的内容...", key="text_chat_input")
+        if text_input:
+            user_input = text_input
+
+    with tab2:
+        # 语音输入
+        speech_text = speech_to_text_widget()
+
+        # 如果有识别结果，显示可编辑的文本区域
+        if speech_text or st.session_state.speech_text:
+            # 使用可编辑的文本区域让用户修改识别结果
+            edited_text = st.text_area(
+                "识别结果",
+                value=speech_text or st.session_state.speech_text,
+                height=100,
+                key="editable_speech_text"
+            )
+
+            # 更新session state中的语音文本为编辑后的文本
+            st.session_state.speech_text = edited_text
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("发送", key="send_speech"):
+                    if edited_text.strip():  # 确保文本不为空
+                        user_input = edited_text
+            with col2:
+                if st.button("清除", key="clear_speech"):
+                    st.session_state.speech_text = ""
+                    st.rerun()
+
+    return user_input
 
 
 def render_editable_form(form_structure: Dict[str, str], form_data: Dict[str, str], time_info: Dict[str, str]):

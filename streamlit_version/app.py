@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 """
 Author: jian wei
-Create Time: 2025/4/25 10:41
-File Name:app.py
+Create Time: 2025/4/27 16:45
+File Name: app.py
 """
 import streamlit as st
-from datetime import datetime
-import pandas as pd
 
 from form_definitions import get_form_structure
 from ai_interface import get_ai_completion
 from ui_components import (
     render_form_selector,
     render_editable_form,
-    render_welcome_message
+    render_welcome_message,
+    render_chat_input_area
 )
 from utils import parse_ai_response, get_current_time_info
 
@@ -33,6 +32,12 @@ def main():
         st.session_state.form_submitted = False
     if "first_message_sent" not in st.session_state:
         st.session_state.first_message_sent = False
+    if "speech_text" not in st.session_state:
+        st.session_state.speech_text = ""
+    if "use_gpu" not in st.session_state:
+        st.session_state.use_gpu = False
+    if "recording_status" not in st.session_state:
+        st.session_state.recording_status = "ready"
 
     # 获取当前时间信息
     time_info = get_current_time_info()
@@ -51,6 +56,8 @@ def main():
             st.session_state.chat_history = []
             st.session_state.form_submitted = False
             st.session_state.first_message_sent = False
+            st.session_state.speech_text = ""
+            st.session_state.recording_status = "ready"
             st.rerun()
         return
 
@@ -93,8 +100,8 @@ def main():
                 else:
                     st.chat_message("assistant").write(message["content"])
 
-        # 用户输入
-        user_input = st.chat_input("请描述您要填写的内容...", key="chat_input")
+        # 用户输入区域（文字输入和语音输入）
+        user_input = render_chat_input_area()
 
         if user_input:
             # 显示用户消息
@@ -150,6 +157,12 @@ def main():
                     "role": "assistant",
                     "content": ai_reply
                 })
+
+                # 清除语音识别结果
+                st.session_state.speech_text = ""
+
+                # 重新加载页面以更新UI
+                st.rerun()
 
             except Exception as e:
                 error_message = f"抱歉，处理您的输入时出现了问题: {str(e)}。请重试或使用不同的描述方式。"
