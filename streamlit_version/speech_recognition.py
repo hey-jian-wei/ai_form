@@ -47,14 +47,12 @@ def record_audio():
 
     # 根据录音状态显示不同的按钮文本
     button_text = "点击开始录音" if st.session_state.recording_status == "ready" else "点击停止录音"
-
     audio_bytes = audio_recorder(
         text=button_text,
         recording_color="#e87070",
         neutral_color="#6aa36f",
         icon_name="microphone",
-        sample_rate=16000,
-        key="audio_recorder"
+        icon_size="2x"
     )
 
     if audio_bytes:
@@ -122,7 +120,6 @@ def speech_to_text_widget():
 
     with col2:
         if audio_path:
-            # 显示录音
             st.audio(audio_bytes, format="audio/wav")
 
             text = transcribe_audio(audio_path)
