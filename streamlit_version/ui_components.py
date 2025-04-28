@@ -36,9 +36,9 @@ def render_form_selector():
             st.rerun()
 
     # 添加GPU选项
-    st.sidebar.title("设置")
-    st.session_state.use_gpu = st.sidebar.checkbox("使用GPU", value=False,
-                                                   help="启用GPU可加速语音识别，但需要CUDA支持")
+    # st.sidebar.title("设置")
+    # st.session_state.use_gpu = st.sidebar.checkbox("使用GPU", value=False,
+    #                                                help="启用GPU可加速语音识别，但需要CUDA支持")
 
     st.markdown("""
     ### 使用说明

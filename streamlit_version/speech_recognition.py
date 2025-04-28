@@ -26,7 +26,7 @@ def init_speech_model():
                     remote_code="./model.py",
                     vad_model="fsmn-vad",
                     vad_kwargs={"max_single_segment_time": 30000},
-                    device="cuda" if st.session_state.get("use_gpu", False) else "cpu",
+                    device="cuda",
                 )
                 st.session_state.speech_model = model
                 return model
