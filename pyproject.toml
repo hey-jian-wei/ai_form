@@ -1,7 +1,10 @@
 [project]
 name = "ai-form"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-powered form processing app"
+packages = [
+    { include = "ai_form", from = "streamlit_version" }
+]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
