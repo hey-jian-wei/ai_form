@@ -10,15 +10,48 @@ from form_definitions import get_form_types, get_form_structure
 from speech_recognition import speech_to_text_widget
 
 
+def render_project_selector():
+    """
+    渲染项目选择界面
+    """
+    st.subheader(f"您已选择 {st.session_state.form_type}，请选择项目")
+
+    # 搜索框
+    search_query = st.text_input("输入项目关键词搜索", key="project_search")
+
+    if search_query:
+        # 执行模糊搜索
+        from project_management import search_projects
+        search_results = search_projects(search_query, st.session_state.projects_list)
+
+        if search_results:
+            st.write("搜索结果:")
+
+            # 显示搜索结果按钮
+            cols = st.columns(min(len(search_results), 3))
+            for i, project in enumerate(search_results):
+                with cols[i % 3]:
+                    if st.button(project, key=f"proj_{i}", use_container_width=True):
+                        st.session_state.project = project
+                        st.rerun()
+        else:
+            st.info("未找到匹配的项目，请尝试其他关键词")
+    # 添加返回表单选择的按钮
+    st.markdown("---")
+    if st.button("返回表单选择", key="back_to_form"):
+        st.session_state.form_type = None
+        st.rerun()
+
+
+# 2. 修改表单选择器，只显示日报和周报
 def render_form_selector():
     """
     渲染表单类型选择界面
     """
+    st.subheader(f"当前项目: {st.session_state.project}")
     st.subheader("请选择要填写的表单类型")
 
-    form_types = get_form_types()
-
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
     with col1:
         if st.button("日报", use_container_width=True):
@@ -29,16 +62,6 @@ def render_form_selector():
         if st.button("周报", use_container_width=True):
             st.session_state.form_type = "周报"
             st.rerun()
-
-    with col3:
-        if st.button("年报", use_container_width=True):
-            st.session_state.form_type = "年报"
-            st.rerun()
-
-    # 添加GPU选项
-    # st.sidebar.title("设置")
-    # st.session_state.use_gpu = st.sidebar.checkbox("使用GPU", value=False,
-    #                                                help="启用GPU可加速语音识别，但需要CUDA支持")
 
     st.markdown("""
     ### 使用说明
@@ -55,21 +78,20 @@ def render_form_selector():
     """)
 
 
+# 3. 修改欢迎消息以包含项目信息
 def render_welcome_message(form_type: str) -> str:
     """
     根据表单类型生成欢迎消息
     """
+    project = st.session_state.project
     messages = {
-        "日报": "你好！我是你的表单填写助手。请告诉我今天的工作内容，我会帮你整理成一份完整的日报。\n\n你可以这样描述：'今天我完成了XX项目的开发，解决了几个问题...'或者使用语音输入功能。",
-        "周报": "你好！我是你的表单填写助手。请告诉我本周的工作内容和成果，我会帮你整理成一份完整的周报。\n\n你可以这样描述：'本周我主要负责了XX项目，完成了哪些任务，遇到了什么问题...'或者使用语音输入功能。",
-        "年报": "你好！我是你的表单填写助手。请告诉我今年的工作成果、项目完成情况和未来规划，我会帮你整理成一份完整的年报。\n\n你可以分多次告诉我不同部分的内容，或者使用语音输入功能，我会逐步完善你的年报。"
+        "日报": f"你好！我是你的{form_type}填写助手。请告诉我今天在「{project}」项目上的工作内容，我会帮你整理成一份完整的日报。\n\n你可以这样描述：'今天我完成了XX功能的开发，解决了几个问题...'或者使用语音输入功能。",
+        "周报": f"你好！我是你的{form_type}填写助手。请告诉我本周在「{project}」项目上的工作内容和成果，我会帮你整理成一份完整的周报。\n\n你可以这样描述：'本周我主要负责了XX模块，完成了哪些任务，遇到了什么问题...'或者使用语音输入功能。"
     }
 
     return messages.get(form_type,
-                        "你好！我是你的表单填写助手。请告诉我需要填写的内容，我会帮你整理成一份完整的表单。你可以文字输入或语音输入。")
+                        f"你好！我是你的{form_type}填写助手。请告诉我在「{project}」项目上需要填写的内容，我会帮你整理成一份完整的表单。你可以文字输入或语音输入。")
 
-
-# 修改 ui_components.py 中的 render_chat_input_area 函数
 
 def render_chat_input_area():
     """
@@ -121,6 +143,8 @@ def render_editable_form(form_structure: Dict[str, str], form_data: Dict[str, st
     渲染可编辑的表单
     """
     with st.form(key="editable_form"):
+        # 显示项目信息
+        st.write(f"**当前项目:** {st.session_state.project}")
         # 显示时间相关信息
         if "日报" in st.session_state.form_type:
             form_data["日期"] = time_info["date"]
@@ -128,8 +152,6 @@ def render_editable_form(form_structure: Dict[str, str], form_data: Dict[str, st
             form_data["周次"] = time_info["week"]
             form_data["开始日期"] = time_info["week_start"]
             form_data["结束日期"] = time_info["week_end"]
-        elif "年报" in st.session_state.form_type:
-            form_data["年份"] = time_info["year"]
 
         # 显示并允许编辑表单字段
         edited_form_data = {}

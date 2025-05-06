@@ -4,9 +4,11 @@ Author: jian wei
 Create Time: 2025/4/27 15:37
 File Name:form_definitions.py
 """
-
-
-# 定义表单结构
+def get_form_types():
+    """
+    返回所有可用的表单类型
+    """
+    return ["日报", "周报"]
 def get_form_structure(form_type):
     """
     根据表单类型返回表单结构
@@ -16,6 +18,7 @@ def get_form_structure(form_type):
             "日期": "",  # 将由系统自动填充
             "姓名": "",
             "部门": "",
+            "项目": "",  # 将使用已选择的项目填充
             "工作内容": "",
             "工作成果": "",
             "遇到的问题": "",
@@ -29,6 +32,7 @@ def get_form_structure(form_type):
             "结束日期": "",  # 将由系统自动填充
             "姓名": "",
             "部门": "",
+            "项目": "",  # 将使用已选择的项目填充
             "本周工作总结": "",
             "重要成果": "",
             "未完成事项": "",
@@ -37,11 +41,12 @@ def get_form_structure(form_type):
             "下周工作计划": "",
             "需要支持": ""
         },
-        "年报": {
-            "年份": "",  # 将由系统自动填充
+        "年报": {  # 保留结构但不在UI中显示
+            "年份": "",
             "姓名": "",
             "部门": "",
             "职位": "",
+            "项目": "",  # 添加项目字段
             "年度工作总结": "",
             "主要成就": "",
             "项目完成情况": "",
@@ -57,10 +62,3 @@ def get_form_structure(form_type):
     }
 
     return forms.get(form_type, {})
-
-
-def get_form_types():
-    """
-    返回所有可用的表单类型
-    """
-    return ["日报", "周报", "年报"]

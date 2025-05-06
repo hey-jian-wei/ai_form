@@ -12,10 +12,10 @@ from ui_components import (
     render_form_selector,
     render_editable_form,
     render_welcome_message,
-    render_chat_input_area
+    render_chat_input_area, render_project_selector
 )
 from utils import parse_ai_response, get_current_time_info
-
+from project_management import load_projects_from_excel, search_projects
 
 def main():
     st.set_page_config(page_title="智能表单填写助手", layout="wide")
@@ -38,13 +38,21 @@ def main():
         st.session_state.use_gpu = False
     if "recording_status" not in st.session_state:
         st.session_state.recording_status = "ready"
+    if "project" not in st.session_state:
+        st.session_state.project = None
+    if "projects_list" not in st.session_state:
+        # 加载项目列表，真实项目中替换为实际Excel路径
+        st.session_state.projects_list = load_projects_from_excel("projects.xlsx")
 
     # 获取当前时间信息
     time_info = get_current_time_info()
-
-    # 如果表单类型未选择，显示选择界面
     if st.session_state.form_type is None:
         render_form_selector()
+        return
+
+        # 然后选择项目
+    if st.session_state.form_type is not None and st.session_state.project is None:
+        render_project_selector()
         return
 
     # 如果表单已提交，显示成功信息
@@ -112,6 +120,7 @@ def main():
 
             # 构建 AI 提示
             prompt = f"""
+            当前项目: {st.session_state.project}
             当前表单类型: {st.session_state.form_type}
             当前时间信息: {time_info}
             表单结构: {form_structure}
@@ -179,7 +188,6 @@ def main():
         # 渲染可编辑表单
         submitted = render_editable_form(form_structure, st.session_state.form_data, time_info)
         if submitted:
-            # 在实际应用中，这里可以添加保存表单数据到数据库的代码
             st.session_state.form_submitted = True
             st.rerun()
 
