@@ -6,7 +6,7 @@ File Name:ai_interface.py
 """
 import os
 import time
-from turtle import st
+import streamlit as st
 from abc import ABC, abstractmethod
 from azure.ai.inference import ChatCompletionsClient
 from azure.ai.inference.models import SystemMessage, UserMessage
